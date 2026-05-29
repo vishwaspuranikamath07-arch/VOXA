@@ -1,0 +1,3 @@
+# Pyrefly type-checker config
+# Points to the venv Python so all installed packages are resolved correctly.
+python_interpreter = ".venv/Scripts/python.exe"

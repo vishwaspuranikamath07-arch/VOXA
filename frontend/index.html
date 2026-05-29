@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Voxa AI — Multilingual Voice Assistant</title>
+  <meta name="description" content="Real-time multilingual AI voice assistant with live transcription and streaming responses." />
+
+  <!-- Inter — closest to ChatGPT's Söhne typeface -->
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="./styles.css" />
+  <link rel="modulepreload" href="./vad-processor.js" />
+</head>
+<body>
+
+  <!-- 3D Particle canvas -->
+  <canvas id="particleCanvas" aria-hidden="true"></canvas>
+
+  <!-- Gradient mesh -->
+  <div class="bg-mesh" aria-hidden="true">
+    <div class="mesh-orb orb-1"></div>
+    <div class="mesh-orb orb-2"></div>
+    <div class="mesh-orb orb-3"></div>
+    <div class="mesh-orb orb-4"></div>
+  </div>
+
+  <div class="app-shell">
+
+    <!-- ══ SIDEBAR ══ -->
+    <aside class="sidebar" id="sidebar">
+      <div class="sidebar-header">
+        <div class="brand">
+          <div class="brand-icon">
+            <svg viewBox="0 0 36 36" fill="none">
+              <circle cx="18" cy="18" r="17" stroke="url(#sg1)" stroke-width="1.4"/>
+              <path d="M11 18a7 7 0 0 0 14 0M18 7v5M18 24v5M7 18h5M24 18h5"
+                stroke="url(#sg2)" stroke-width="1.8" stroke-linecap="round"/>
+              <circle cx="18" cy="18" r="3.5" fill="url(#sg3)"/>
+              <defs>
+                <linearGradient id="sg1" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#bba2e8"/><stop offset="1" stop-color="#b6e2e5"/>
+                </linearGradient>
+                <linearGradient id="sg2" x1="0" y1="0" x2="36" y2="36" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#b6e2e5"/><stop offset="1" stop-color="#eeaeca"/>
+                </linearGradient>
+                <linearGradient id="sg3" x1="14" y1="14" x2="22" y2="22" gradientUnits="userSpaceOnUse">
+                  <stop stop-color="#bba2e8"/><stop offset="1" stop-color="#eeaeca"/>
+                </linearGradient>
+              </defs>
+            </svg>
+          </div>
+          <div class="brand-text">
+            <span class="brand-name">Voxa <span class="brand-ai">AI</span></span>
+            <span class="brand-sub">Multilingual Assistant</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Provider Status</p>
+        <div class="api-pills">
+          <div class="api-pill">
+            <span class="api-dot" id="geminiDot"></span>
+            <span class="api-name">Gemini</span>
+            <span class="api-keys" id="geminiKeys">—</span>
+          </div>
+          <div class="api-pill">
+            <span class="api-dot" id="sarvamDot"></span>
+            <span class="api-name">Sarvam TTS</span>
+            <span class="api-keys" id="sarvamKeys">—</span>
+          </div>
+          <div class="api-pill">
+            <span class="api-dot" id="ollamaDot"></span>
+            <span class="api-name">Ollama Local</span>
+            <span class="api-keys" id="ollamaKeys">—</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Session Stats</p>
+        <div class="stat-row"><span>Messages</span><span id="statMessages" class="stat-val">0</span></div>
+        <div class="stat-row"><span>Avg TTFT</span><span id="statAvgTtft" class="stat-val">—</span></div>
+        <div class="stat-row"><span>Language</span><span id="statLang" class="stat-val">Auto</span></div>
+        <div class="stat-row"><span>Model</span><span id="statModel" class="stat-val">—</span></div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Transcription Mode</p>
+        <div class="mode-info">
+          <div class="mode-row"><span class="mode-dot"></span>Indian Languages → <strong>en-IN (Romanized)</strong></div>
+          <div class="mode-row"><span class="mode-dot"></span>English → <strong>en-IN</strong></div>
+          <div class="mode-row"><span class="mode-dot"></span>European / CJK → <strong>Native STT</strong></div>
+          <div class="mode-row"><span class="mode-dot"></span>Code-switch → <strong>Auto-detect</strong></div>
+        </div>
+      </div>
+
+      <div class="sidebar-section">
+        <p class="sidebar-label">Supported Languages</p>
+        <div class="lang-grid">
+          <span class="lang-chip">🇮🇳 Hindi</span>
+          <span class="lang-chip">🇮🇳 Kannada</span>
+          <span class="lang-chip">🇮🇳 Bengali</span>
+          <span class="lang-chip">🇮🇳 Tamil</span>
+          <span class="lang-chip">🇮🇳 Telugu</span>
+          <span class="lang-chip">🇮🇳 Marathi</span>
+          <span class="lang-chip">🇮🇳 Gujarati</span>
+          <span class="lang-chip">🇬🇧 English</span>
+          <span class="lang-chip">+14 more</span>
+        </div>
+      </div>
+
+      <div class="sidebar-footer">
+        <button id="clearBtn" class="btn-ghost">
+          <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14H6L5 6"/>
+            <path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/>
+          </svg>
+          Clear conversation
+        </button>
+      </div>
+    </aside>
+
+    <!-- ══ MAIN ══ -->
+    <div class="main-content">
+
+      <!-- Topbar -->
+      <header class="topbar">
+        <button class="sidebar-toggle" id="sidebarToggle" aria-label="Toggle sidebar">
+          <svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round">
+            <line x1="3" y1="6" x2="21" y2="6"/>
+            <line x1="3" y1="12" x2="21" y2="12"/>
+            <line x1="3" y1="18" x2="21" y2="18"/>
+          </svg>
+        </button>
+
+        <div class="state-cluster" aria-live="polite">
+          <span id="stateBadge" class="state-badge state-ready">● Ready</span>
+          <span id="langBadge" class="lang-badge">🌐 Auto-detect</span>
+          <select id="voiceLangSelect" class="voice-lang-select" aria-label="Voice input language">
+            <option value="English">English</option>
+            <option value="Hindi">Hindi</option>
+            <option value="Bengali">Bengali</option>
+            <option value="Kannada">Kannada</option>
+            <option value="Tamil">Tamil</option>
+            <option value="Telugu">Telugu</option>
+            <option value="Spanish">Spanish</option>
+          </select>
+          <span id="ttftBadge" class="ttft-badge hidden"></span>
+        </div>
+
+        <div id="providerChip" class="provider-chip">
+          <span class="provider-dot"></span>
+          <span id="providerLabel">Gemini</span>
+        </div>
+      </header>
+
+      <!-- Metrics bar -->
+      <div class="metrics-bar">
+        <div class="metric-item">
+          <span class="mi-label">STT</span>
+          <span id="sttLatency" class="mi-val">—</span>
+        </div>
+        <div class="metric-sep"></div>
+        <div class="metric-item">
+          <span class="mi-label">TTFT</span>
+          <span id="llmLatency" class="mi-val">—</span>
+        </div>
+        <div class="metric-sep"></div>
+        <div class="metric-item metric-highlight">
+          <span class="mi-label">RESPONSE</span>
+          <span id="totalLatency" class="mi-val">—</span>
+        </div>
+        <div class="metric-sep"></div>
+        <div class="metric-item">
+          <span class="mi-label">TTS</span>
+          <span id="ttsLatency" class="mi-val">—</span>
+        </div>
+        <div class="metric-sep"></div>
+        <div class="metric-item">
+          <span class="mi-label">Model</span>
+          <span id="modelName" class="mi-val">—</span>
+        </div>
+      </div>
+
+      <!-- Chat area -->
+      <main class="chat-area" id="chatArea" aria-live="polite">
+        <div class="welcome-state" id="welcomeState">
+          <div class="welcome-orb">
+            <div class="orb-ring r1"></div>
+            <div class="orb-ring r2"></div>
+            <div class="orb-ring r3"></div>
+            <span class="orb-icon">◈</span>
+          </div>
+          <h2 class="welcome-title">Start a conversation</h2>
+          <p class="welcome-sub">
+            Speak naturally in any language. Your words appear in real-time as you speak.<br>
+            AI responds in your original language.
+          </p>
+          <div class="welcome-demos">
+            <div class="demo-card">
+              <span class="demo-speak">आप कैसे हो</span>
+              <span class="demo-arrow">→</span>
+              <span class="demo-result">आप कैसे हो</span>
+            </div>
+            <div class="demo-card">
+              <span class="demo-speak">ನೀವು ಹೇಗಿದ್ದೀರಿ</span>
+              <span class="demo-arrow">→</span>
+              <span class="demo-result">ನೀವು ಹೇಗಿದ್ದೀರಿ</span>
+            </div>
+          </div>
+        </div>
+      </main>
+
+      <!-- ══ VOICE SECTION ══ -->
+      <div class="voice-section">
+
+        <!-- Waveform -->
+        <div class="wave-container">
+          <div class="wave-glow" id="waveGlow"></div>
+          <canvas id="waveformCanvas" class="wave-canvas" aria-hidden="true"></canvas>
+        </div>
+
+        <!-- Mic + live transcript zone -->
+        <div class="mic-zone">
+          <span class="conv-mode-label" id="convModeLabel">● Conversation</span>
+          <button id="micBtn" class="mic-btn" aria-label="Start microphone" type="button">
+            <span class="mic-ring r1"></span>
+            <span class="mic-ring r2"></span>
+            <span class="mic-inner">
+              <svg id="micSvg" width="26" height="26" viewBox="0 0 24 24" fill="none"
+                stroke="currentColor" stroke-width="2" stroke-linecap="round">
+                <path d="M12 1a3 3 0 0 0-3 3v8a3 3 0 0 0 6 0V4a3 3 0 0 0-3-3z"/>
+                <path d="M19 10v2a7 7 0 0 1-14 0v-2"/>
+                <line x1="12" y1="19" x2="12" y2="23"/>
+                <line x1="8" y1="23" x2="16" y2="23"/>
+              </svg>
+            </span>
+          </button>
+          <span id="micHint" class="mic-hint">Tap to speak</span>
+        </div>
+
+        <!-- ══ LIVE TRANSCRIPT PREVIEW ZONE (key new element) ══ -->
+        <div class="live-zone" id="liveZone" aria-live="polite" aria-label="Live transcription">
+          <div class="live-zone-inner">
+            <span class="live-icon">◉</span>
+            <div class="live-text-wrap">
+              <span id="liveText" class="live-text"></span>
+              <span class="live-cursor" id="liveCursor"></span>
+            </div>
+            <!-- Silence countdown bar — shrinks from full-width to zero as silence timeout approaches -->
+            <div class="live-silence-bar" id="liveCountdownBar"></div>
+          </div>
+          <div class="live-meta">
+            <span id="liveWordCount" class="live-wc"></span>
+            <span id="liveConfidence" class="live-conf"></span>
+          </div>
+        </div>
+
+      </div><!-- /voice-section -->
+
+      <!-- Composer -->
+      <div class="composer">
+        <div class="composer-wrap" id="composerWrap">
+          <input
+            id="textInput"
+            type="text"
+            class="composer-input"
+            placeholder="Speak or type in any language…"
+            maxlength="2000"
+            autocomplete="off"
+            spellcheck="false"
+            aria-label="Message"
+          />
+          <button id="sendBtn" class="composer-send" type="button" aria-label="Send">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round">
+              <line x1="22" y1="2" x2="11" y2="13"/>
+              <polygon points="22 2 15 22 11 13 2 9 22 2"/>
+            </svg>
+          </button>
+        </div>
+        <p id="systemMessage" class="system-msg" role="status">
+          Ready — tap <strong>Mic</strong> to speak or type below.
+        </p>
+      </div>
+
+    </div><!-- /main-content -->
+  </div><!-- /app-shell -->
+
+  <!-- Toast Container -->
+  <div class="toast-container" id="toastContainer" aria-live="polite"></div>
+
+  <!-- Latency Debug Overlay (Ctrl+D to toggle) -->
+  <div id="debugOverlay" class="debug-overlay hidden">
+    <h3>STT Pipeline Latency</h3>
+    <div class="debug-row"><span class="dlbl">[VAD]</span><span id="dbgVad">—</span></div>
+    <div class="debug-row"><span class="dlbl">[WEB]</span><span id="dbgWeb">—</span></div>
+    <div class="debug-row"><span class="dlbl">[BEND]</span><span id="dbgBend">—</span></div>
+    <div class="debug-row"><span class="dlbl">[MERGE]</span><span id="dbgMerge">—</span></div>
+    <div class="debug-row"><span class="dlbl">[LLM]</span><span id="dbgLlm">—</span></div>
+    <div class="debug-row"><span class="dlbl">[TTS]</span><span id="dbgTts">—</span></div>
+    <div class="debug-row total"><span class="dlbl">TOTAL</span><span id="dbgTotal">—</span></div>
+  </div>
+
+  <script src="./app.js"></script>
+</body>
+</html>
