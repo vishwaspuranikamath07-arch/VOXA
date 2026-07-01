@@ -1,0 +1,41 @@
+# Environment variables (SENSITIVE - never commit)
+.env
+.env.*
+*.env
+
+# Python virtual environments
+.venv/
+venv/
+env/
+
+# Python cache
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Audio files (temp/cache)
+audio/cache/
+temp_audio.wav
+input.wav
+output.mp3
+
+# Logs and test output
+*.log
+e2e_results.txt
+
+# IDE / Editor
+.vscode/
+.idea/
+
+# OS files
+desktop.ini
+Thumbs.db
+.DS_Store
+
+# Scratch / dev test files
+scratch_*.py
+
+# Pyrefly
+pyrefly.toml
