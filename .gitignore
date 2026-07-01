@@ -1,7 +1,8 @@
 # Environment variables (SENSITIVE - never commit)
 .env
-.env.*
 *.env
+# Allow the example template
+!.env.example
 
 # Python virtual environments
 .venv/
